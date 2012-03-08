@@ -1,0 +1,10 @@
+How to get the source code of patch and diff utilities?
+------------------------------------------------------
+patch.exe and diff.exe utilities are coming from the GNU project.
+To get the source code, go to this site:
+patch: http://savannah.gnu.org/projects/patch/
+diff: http://savannah.gnu.org/projects/diffutils
+
+Versions distributed are:
+patch: 2.5.9
+diff: 2.8.7.1605

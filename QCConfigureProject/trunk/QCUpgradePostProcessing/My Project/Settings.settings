@@ -1,0 +1,42 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="My" GeneratedClassName="MySettings" UseMySettingsClassName="true">
+  <Profiles />
+  <Settings>
+    <Setting Name="TDAdminUser" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">CHANGE_ME_TDAdmin_User_Name</Value>
+    </Setting>
+    <Setting Name="TDAdminPassword" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">CHANGE_ME_TDAdmin_User_Password</Value>
+    </Setting>
+    <Setting Name="QCTemplateGroups" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">CHANGE_ME__Engineer,_Lead,_Product Definer,_Project Admin,_Reporter,_Test Definer,_Test Executor,_Project Manager</Value>
+    </Setting>
+    <Setting Name="QCDefaultGroups" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Developer,Project Manager,QATester,TDAdmin,Viewer</Value>
+    </Setting>
+    <Setting Name="QCFarm" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="SaveLogsTo" Type="System.String" Scope="Application">
+      <Value Profile="(Default)" />
+    </Setting>
+    <Setting Name="ProjectUsersWithGroup" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">CHANGE_ME_alm_user1,alm_group1,alm_user2,alm_group2</Value>
+    </Setting>
+    <Setting Name="ManagedTemplates" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">CHANGE_ME_TEMPLATE1,TEMPLATE2</Value>
+    </Setting>
+    <Setting Name="EmailFrom" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">from@me.com</Value>
+    </Setting>
+    <Setting Name="EmailTo" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">to@you.com</Value>
+    </Setting>
+    <Setting Name="EmailActivated" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">no</Value>
+    </Setting>
+    <Setting Name="EmailHost" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">smtphost</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
