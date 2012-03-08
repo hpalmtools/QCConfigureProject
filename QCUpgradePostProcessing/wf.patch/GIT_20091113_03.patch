@@ -1,0 +1,345 @@
+diff -bruN GIT_20091113_scripts/common.tds GIT_20091113_ALM11_scripts/common.tds
+--- GIT_20091113_scripts/common.tds	2011-09-09 15:06:18.932514600 +0800
++++ GIT_20091113_ALM11_scripts/common.tds	2011-12-08 10:40:47.432619300 +0800
+@@ -105,6 +105,8 @@
+ 'StarTeam Realm
+ CONST CR_STARTEAM_REALM = "PLEASE_SET_STARTEAM_REALM_IN_WORKFLOW_"
+ 
++' Stores the current model name which is used by EnterModule
++Dim CurrentModule
+ 
+ ' ##############################################################################
+ ' Function ShowVersion
+@@ -227,17 +229,17 @@
+ 
+     Select Case ActionName
+      ' Common Actions
+-     Case "TEMPLATE_VERSION"
++     Case "UserDefinedActions.TEMPLATE_VERSION"
+           ' Display template version
+           ShowVersion
+-     Case "HELP"
++     Case "UserDefinedActions.HELP"
+           ' Display online help
+           Set shell = CreateObject("Wscript.Shell")
+           shell.Run "iexplore " & ONLINE_HELP_BASE_URL & newActiveModule & ".aspx"
+           Set shell = Nothing
+ 
+      ' CR Actions
+-     Case "CR_goto_ST_CR"
++     Case "UserDefinedActions.CR_goto_ST_CR"
+           'Launch StarTeam SCM tool and pass it the selected CR
+           If (Bug_Fields("BG_USER_56").Value = "") Then
+               Msgbox "SCM CR ID field is empty" & chr(13) & "Can't access corresponding SCM change request", 64, "Info"
+@@ -259,34 +261,34 @@
+               Set shell = Nothing
+           End If
+ 
+-     Case "CR_DISPLAY_SAVED_FIELDS"
++     Case "UserDefinedActions.CR_DISPLAY_SAVED_FIELDS"
+          ' Displays saved user fields used on a Submit
+          Call Custom_PushPinDisplaySavedFields(ENTITY_CR, "CR")
+ 
+-     Case "CR_SAVE_FIELD_VALUES"
++     Case "UserDefinedActions.CR_SAVE_FIELD_VALUES"
+         ' CR: Saves user fields used on a Submit
+         Call Custom_PushPinSetLastValue(ENTITY_CR, "CR", "SET")
+ 
+-     Case "RM_DISPLAY_SAVED_FIELDS"
++     Case "UserDefinedActions.RM_DISPLAY_SAVED_FIELDS"
+         ' Displays saved user fields used on a Submit
+         Call Custom_PushPinDisplaySavedFields(ENTITY_RQ, "RM")
+ 
+-     Case "RM_SAVE_FIELD_VALUES"
++     Case "UserDefinedActions.RM_SAVE_FIELD_VALUES"
+         'Get the PushPin list for the Project List
+         ' RM: Saves user fields used on a Submit
+         Call Custom_PushPinSetLastValue(ENTITY_RQ, "RM", "SET")
+ 
+-     Case "TS_DISPLAY_SAVED_FIELDS"
++     Case "UserDefinedActions.TS_DISPLAY_SAVED_FIELDS"
+         ' Displays saved user fields used on a Submit
+         Call Custom_PushPinDisplaySavedFields(ENTITY_TS, "TS")
+ 
+-     Case "TS_SAVE_FIELD_VALUES"
++     Case "UserDefinedActions.TS_SAVE_FIELD_VALUES"
+         'Get the PushPin list for the Project List
+         ' TS: Saves user fields used on a Submit
+         Call Custom_PushPinSetLastValue(ENTITY_TS, "TS", "SET")
+ 
+      ' TestLab Actions
+-     Case "TestLab_Reschedule"
++     Case "UserDefinedActions.TestLab_Reschedule"
+        ' TL: Toolbar "Re-schedule" button for TestLab module
+        TLWF_Reschedule()
+     End Select
+@@ -979,12 +981,21 @@
+     If CurrentModule = "TestLab" Then
+         CurrentModule = newActiveModule
+         if CurrentModule = "TestPlan" Then
+-          aAction=Actions.Action("act_filter_refresh")
+-          aAction.Execute
++          Actions.Action("TestPlan.Refresh").Execute
+         End If
+     Else
+         CurrentModule = newActiveModule
+     End If
++
++    ' EnterModule does not trigger the *_MoveTo event.
++    ' Call *_MoveTo functionto to hide the reserved fields.
++    Select Case newActiveModule
++      Case "TestPlan"
++        Test_MoveTo
++      Case "TestLab"
++        TestSet_MoveTo
++    End Select
++
+   On Error GoTo 0
+ End Sub
+ 
+@@ -2424,3 +2435,79 @@
+   newActiveModule = replace(newActiveModule, " ", "")
+   On Error GoTo 0
+ End Function
++
++Function DefaultRes
++  On Error Resume Next
++
++  DefaultRes = True
++  On Error GoTo 0
++End Function
++
++Function CanCustomize(DomainName, ProjectName, UserName)
++  Dim blnIsEntityModified
++  CanCustomize = DefaultRes
++  blnIsEntityModified = False
++  Select Case newActiveModule
++    Case "Releases"
++      blnIsEntityModified = IsEntityModified(Release_Fields)
++    Case "Requirements"
++      blnIsEntityModified = IsEntityModified(Req_Fields)
++    Case "Defects"
++      blnIsEntityModified = IsEntityModified(Bug_Fields)
++    Case "TestPlan"
++      blnIsEntityModified = IsEntityModified(Test_Fields)
++    Case "TestLab"
++      blnIsEntityModified = IsEntityModified(TestSet_Fields) OR _
++                            IsEntityModified(TestSetTest_Fields)
++    Case Else
++      'do nothing
++  End Select
++  If (blnIsEntityModified) Then
++    CanCustomize = False
++    MsgBox "You have unsaved changes." & vbCrLf &_
++           "You must first save or undo the changes before switching " &_
++           "to Project Customization.",vbExclamation, "Custom Workflow Warning"
++  End If
++  On Error GoTo 0
++End Function 'CanCustomize
++
++'******************************************************************************
++'Purpose: check to see if current selected entity has been modified, but not committed
++'Input: objEntity : Global Fields object (Bug_Fields, Req_Fields, Test_Fields, etc)
++'Returns: True if modified. False otherwise
++'
++'*******************************************************************************
++Function IsEntityModified(objEntity)
++  On Error Resume Next
++
++  IsEntityModified = False
++  If (Not IsObject(objEntity)) Then Exit Function
++  If (Not IsActiveModule(objEntity)) Then Exit Function
++
++  'Check each field of the given entity
++  For i=0 To objEntity.Count
++    If (objEntity.FieldById(i).IsModified) Then
++      IsEntityModified = True
++      Exit For
++    End If
++  Next
++  On Error GoTo 0
++End Function
++'******************************************************************************
++'Purpose:  Check if the "Fields" object for a particular entity type exists.
++'          Only if the entity of that type is currently selected in the user
++'          interface that the Fields object can be accessed
++'Input: p_objEntity: Fields object for the active module (Bug_Fields, Req_Fields, etc)
++'
++'******************************************************************************
++Function IsActiveModule(p_objEntity)
++On Error Resume Next
++  Dim intCount
++  err.clear
++  IsActiveModule = True
++  intCount = p_objEntity.Count
++  If(err.Number > 0) Then
++    IsActiveModule = False
++  End If
++  On Error GoTo 0
++End Function
+diff -bruN GIT_20091113_scripts/defects.tds GIT_20091113_ALM11_scripts/defects.tds
+--- GIT_20091113_scripts/defects.tds	2011-09-09 15:06:18.948114700 +0800
++++ GIT_20091113_ALM11_scripts/defects.tds	2011-09-13 10:58:10.823792800 +0800
+@@ -984,7 +984,7 @@
+ Function CR_GetDefaultReqFields()
+         On Error Resume Next
+ 
+-        Dim j, k
++        Dim j, k, blnFieldRequired
+         j = 0
+         k = 0
+ 
+@@ -1011,7 +1011,11 @@
+             FieldName = "BG_USER_" & i
+         End If
+ 
+-        If Bug_Fields(FieldName).IsRequired = True Then
++        blnFieldRequired = Bug_Fields(FieldName).IsRequired
++        If Err.Number <> 0 Then
++            Err.Clear
++        Else
++            If blnFieldRequired = True Then
+             DefaultRequiredFieldArray(j) = FieldName
+             ' MsgBox "DefaultReqFieldArray: i=" & i & "  j=" & j & "  adding BG_USER Rerquired field: "  & Bug_Fields(FieldName).FieldLabel
+              j = j + 1
+@@ -1020,6 +1024,7 @@
+             DefaultNonRequiredFieldArray(k) = FieldName
+             k = k + 1
+         End If
++        End If
+     Next
+ 
+     ' for debugging
+@@ -1392,6 +1397,8 @@
+ Function GetDetailsPageName(PageName, PageNum)
+   On Error Resume Next
+ 
++  Select Case newActiveModule
++    Case "Defects"
+   ' Workaround: had to add this here, because if i Open a CR then press "Close",
+   ' i was getting hidden buttons showing up on my Detail Form
+   CR_FieldCust_Details
+@@ -1403,6 +1410,7 @@
+     ' to required after the tabs where drawn
+     ' Set Required/Non-required fields for this CR
+     CR_SetRequiredFields
++  End Select
+ 
+   CR_PrintError ("GetDetailsPageName")
+ 
+@@ -1432,7 +1440,7 @@
+ 
+ 
+     Select Case PageName
+-        Case "Page 1"
++        Case "Details"
+             CR_PageName = CR_TAB1
+         Case "Page 2"
+             CR_PageName = CR_TAB2
+diff -bruN GIT_20091113_scripts/testlab.tds GIT_20091113_ALM11_scripts/testlab.tds
+--- GIT_20091113_scripts/testlab.tds	2011-09-09 15:06:18.979314900 +0800
++++ GIT_20091113_ALM11_scripts/testlab.tds	2011-12-08 10:57:41.854051300 +0800
+@@ -139,7 +139,7 @@
+ 
+     ' When using AddItem, test set name length must be smaller than 32, so create
+     ' Test set with a temporary name
+-    Set new_testset = TSF.AddItem("tmptestset")
++    Set new_testset = TSF.AddItem(Null)
+     new_testset.TestSetFolder = TDConnection.TestSetTreeManager.NodeById(TS.TestSetFolder.NodeID)
+     new_testset.Name = myTSName
+     ' Now copy test instances matching the filter
+@@ -178,12 +178,8 @@
+   End Select
+ 
+   ' Hide reserved HP Core fields (CY_USER_01 to CY_USER_10)
+-  For i = 1 To 9
+-      TestSet_Fields("CY_USER_0" & CStr(i)).IsVisible = False
+-  Next
+-  TestSet_Fields("CY_USER_10").IsVisible = False
+   ' Also hide ITG request ID
+-  TestSet_Fields("CY_REQUEST_ID").IsVisible = False
++  Call TestSet_HideReservedFields
+ 
+   On Error GoTo 0
+ End Sub
+@@ -235,3 +231,33 @@
+ 
+   On Error GoTo 0
+ End Sub
++
++Sub TestSet_New
++  On Error Resume Next
++
++  ' Hide reserved HP Core fields (CY_USER_01 to CY_USER_10)
++  ' Also hide ITG request ID
++  Call TestSet_HideReservedFields
++
++  On Error GoTo 0
++End Sub
++
++' ##############################################################################
++' Hide reserved HP Core fields (CY_USER_01 to CY_USER_10)
++' Also hide ITG request ID
++' ##############################################################################
++Sub TestSet_HideReservedFields
++  On Error Resume Next
++
++  ' Hide reserved HP Core fields (CY_USER_01 to CY_USER_10)
++  For i = 1 To 9
++      TestSet_Fields("CY_USER_0" & CStr(i)).IsVisible = False
++  Next
++  TestSet_Fields("CY_USER_10").IsVisible = False
++
++  ' Also hide ITG request ID
++  TestSet_Fields("CY_REQUEST_ID").IsVisible = False
++
++'  Custom_ShowError("TestSet_HideReservedFields")
++  On Error GoTO 0
++End Sub
+diff -bruN GIT_20091113_scripts/testplan.tds GIT_20091113_ALM11_scripts/testplan.tds
+--- GIT_20091113_scripts/testplan.tds	2011-09-09 15:06:18.994915000 +0800
++++ GIT_20091113_ALM11_scripts/testplan.tds	2011-12-08 10:57:54.998365600 +0800
+@@ -1,13 +1,10 @@
+ 
+ Sub Test_MoveTo
+   On Error Resume Next
++
+   ' Hide reserved HP Core fields (TS_USER_02 to TS_USER_20)
+-  For i = 2 To 9
+-      Test_Fields("TS_USER_0" & CStr(i)).IsVisible = False
+-  Next
+-  For i = 10 To 20
+-      Test_Fields("TS_USER_" & CStr(i)).IsVisible = False
+-  Next
++  Call Test_HideReservedFields
++
+   On Error GoTo 0
+ End Sub
+ 
+@@ -31,5 +28,26 @@
+   ' the fields to to saved values that are in the NewRMDefaultString array
+   Call Custom_PushPinSetLastValue(ENTITY_TS, "TS", "GET")
+ 
++  ' Hide reserved HP Core fields (TS_USER_02 to TS_USER_20)
++  Call Test_HideReservedFields
++
+   On Error GoTo 0
+ End Sub
++
++' ##############################################################################
++' Hide reserved HP Core fields (TS_USER_02 to TS_USER_20)
++' ##############################################################################
++Sub Test_HideReservedFields
++  On Error Resume Next
++
++  ' Hide reserved HP Core fields (TS_USER_02 to TS_USER_20)
++  For i = 2 To 9
++      Test_Fields("TS_USER_0" & CStr(i)).IsVisible = False
++  Next
++  For i = 10 To 20
++      Test_Fields("TS_USER_" & CStr(i)).IsVisible = False
++  Next
++
++'  Custom_ShowError("Test_HideReservedFields")
++  On Error GoTO 0
++End Sub
