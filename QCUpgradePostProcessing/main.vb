@@ -816,6 +816,42 @@ err:
                             End If
 
                     End Select
+                Case "CleanWorkflowCode"
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: CleanWorkflowCode: clean the workflow code...")
+                    Dim strWorkflowFiles As String = arrAction(2)
+                    Dim strReqPath As String = arrAction(3)
+                    Dim strReqType As String = arrAction(4)
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: CleanWorkflowCode: the workflow files to clean are: " + strWorkflowFiles + _
+                                "; save them in req: " + strReqPath + " (Type: " + strReqType + ")")
+
+                    Dim workflowFiles() As String = strWorkflowFiles.Split(New [Char]() {";"})
+                    CustomActions.CleanWorkflowCode(tdc, String.Join(",", workflowFiles), strReqPath, strReqType)
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: CleanWorkflowCode: Success")
+                Case "DownloadWorkflowCode"
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: DownloadWorkflowCode: download the workflow code...")
+                    Dim strWorkflowFiles As String = arrAction(2)
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: DownloadWorkflowCode: the workflow files to download are: " + strWorkflowFiles)
+
+                    Dim workflowFiles() As String = strWorkflowFiles.Split(New [Char]() {";"c})
+                    CustomActions.DownloadWorkflowCode(tdc, String.Join(",", workflowFiles))
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: DownloadWorkflowCode: Success")
+                Case "DeleteWorkflowCode"
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: DeleteWorkflowCode: delete the workflow code...")
+                    Dim strWorkflowFiles As String = arrAction(2)
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: DeleteWorkflowCode: the workflow files to delete are: " + strWorkflowFiles)
+
+                    Dim workflowFiles() As String = strWorkflowFiles.Split(New [Char]() {";"c})
+                    CustomActions.DeleteWorkflowCode(tdc, String.Join(",", workflowFiles))
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: DeleteWorkflowCode: Success")
                 Case Else
                     log("ERROR", "doCustAction [" + pi.ToString() + _
                         "]: do not know how to handle action! (fix your actions.csv file)")
