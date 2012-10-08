@@ -106,6 +106,56 @@
         att.Post()
     End Sub
 
+    Shared Function GetAllUDFFields(ByVal tdc As TDAPIOLELib.TDConnection, ByVal tableName As String) As ArrayList
+        Dim uFields As ArrayList = New ArrayList()
+        Dim custom As TDAPIOLELib.Customization = tdc.Customization
+        Dim cFields As TDAPIOLELib.CustomizationFields = custom.Fields
+
+        Dim fields = cFields.Fields(tableName)
+        For i = 1 To fields.Count
+            Dim cField = fields.Item(i)
+            If IsUDFFiled(cField) Then
+                uFields.Add(cField)
+            End If
+        Next
+
+        GetAllUDFFields = uFields
+    End Function
+
+    Shared Function GetUDFField(ByVal tdc As TDAPIOLELib.TDConnection, ByVal tableName As String, ByVal fieldName As String) As TDAPIOLELib.CustomizationField
+        GetUDFField = Nothing
+
+        Dim cFields As ArrayList = GetAllUDFFields(tdc, tableName)
+        For Each cField As TDAPIOLELib.CustomizationField In cFields
+            Dim label As String = cField.UserLabel
+            If String.Equals(fieldName, label, StringComparison.InvariantCultureIgnoreCase) Then
+                GetUDFField = cField
+                Exit Function
+            End If
+        Next
+    End Function
+
+    Shared Function IsUDFFiled(ByVal cField As TDAPIOLELib.CustomizationField) As Boolean
+        Dim columnName As String = cField.ColumnName
+        Dim userLabel As String = cField.UserLabel
+        If columnName.Contains("_USER_") And Not columnName.Contains("_USER_TEMPLATE_") And Not String.IsNullOrEmpty(userLabel) Then
+            IsUDFFiled = True
+        Else
+            IsUDFFiled = False
+        End If
+    End Function
+
+    Shared Sub SetFieldPriority(ByVal cField As TDAPIOLELib.CustomizationField, ByVal priority As String, ByVal value As String)
+        If String.Equals(priority, "IsRequired") Then
+            If String.Equals(value, "true", StringComparison.InvariantCultureIgnoreCase) Then
+                cField.IsRequired = True
+            Else
+                cField.IsRequired = False
+            End If
+        Else
+            main.log("ERROR", "SetUDFPriority: the specified priority (" + priority + ") can not be identified")
+        End If
+    End Sub
 
     Shared Function GetWorkflowCodeStorage(ByVal tdc As TDAPIOLELib.TDConnection) As TDAPIOLELib.ExtendedStorage
         Dim extStorage As TDAPIOLELib.ExtendedStorage = tdc.ExtendedStorage

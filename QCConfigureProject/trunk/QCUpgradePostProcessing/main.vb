@@ -852,6 +852,17 @@ err:
                     CustomActions.DeleteWorkflowCode(tdc, String.Join(",", workflowFiles))
                     log("INFO", "doCustAction [" + pi.ToString() + _
                                 "]: DeleteWorkflowCode: Success")
+                Case "SetFieldToNotRequired"
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: SetFieldToNotRequired: set the user defined field to not required...")
+                    Dim tableName As String = arrAction(2)
+                    Dim fieldName As String = arrAction(3)
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: SetFieldToNotRequired: the user defined field is: " + tableName + "\" + fieldName)
+
+                    CustomActions.SetFieldToNotRequired(tdc, tableName, fieldName)
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: SetFieldToNotRequired: Success")
                 Case Else
                     log("ERROR", "doCustAction [" + pi.ToString() + _
                         "]: do not know how to handle action! (fix your actions.csv file)")
