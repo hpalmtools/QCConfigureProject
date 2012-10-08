@@ -43,6 +43,29 @@ Public Class CustomActions
         ALMHelper.DeleteWorkflowCode(tdc, workflowFileFilter)
     End Sub
 
+    Public Shared Sub SetFieldToNotRequired(ByVal tdc As TDAPIOLELib.TDConnection, ByVal tableName As String, ByVal fieldName As String)
+        If String.Equals(fieldName, "*") Then
+            Dim cFields As ArrayList
+            cFields = ALMHelper.GetAllUDFFields(tdc, tableName)
+            If cFields.Count = 0 Then
+                main.log("ERROR", "SetFieldToNotRequired: no user defined fields are found for tabele (" + tableName + ")")
+                Exit Sub
+            End If
+            For Each cField As TDAPIOLELib.CustomizationField In cFields
+                ALMHelper.SetFieldPriority(cField, "IsRequired", "False")
+            Next
+        Else
+            Dim cField As TDAPIOLELib.CustomizationField
+            cField = ALMHelper.GetUDFField(tdc, tableName, fieldName)
+            If IsNothing(cField) Then
+                main.log("ERROR", "SetFieldToNotRequired: the specified field (" + tableName + "\" + fieldName + ") does not exist")
+                Exit Sub
+            End If
+            ALMHelper.SetFieldPriority(cField, "IsRequired", "False")
+        End If
+
+    End Sub
+
     Shared Function getUniqueName(ByVal tdc As TDAPIOLELib.TDConnection) As String
         Dim now As DateTime = DateTime.Now
         Dim server As String = extractServer(tdc.ServerURL)
