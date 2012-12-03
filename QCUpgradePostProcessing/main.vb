@@ -560,16 +560,19 @@ err:
                             Select New With {.ActionTemplate = r.Field(Of String)(0), _
                                              .ActionName = r.Field(Of String)(1), _
                                              .ActionParam1 = r.Field(Of String)(2), _
-                                             .ActionParam2 = r.Field(Of String)(3), _
-                                             .ActionParam3 = r.Field(Of String)(4), _
-                                             .ActionParam4 = r.Field(Of String)(5)}
+                                             .ActionParam2 = r.Field(Of Object)(3), _
+                                             .ActionParam3 = r.Field(Of Object)(4), _
+                                             .ActionParam4 = r.Field(Of Object)(5)}
             log("INFO", "DoProjectActions: loading project customization")
             gCust = tdc.Customization
             gCust.Load()
             Dim i As Integer
             i = 1
             For Each action In actions
-                iRet = doCustAction(i, action.ActionTemplate, action.ActionName, action.ActionParam1, action.ActionParam2, action.ActionParam3, action.ActionParam4)
+                iRet = doCustAction(i, action.ActionTemplate, action.ActionName, action.ActionParam1,
+                                    If(action.ActionParam2 Is Nothing, vbNullString, action.ActionParam2.ToString),
+                                    If(action.ActionParam3 Is Nothing, vbNullString, action.ActionParam3.ToString),
+                                    If(action.ActionParam4 Is Nothing, vbNullString, action.ActionParam4.ToString))
                 If iRet = -2 Then
                     ' -2 -> Notify by email. Something needs to be fixed in the tool
                     gError = -2
@@ -863,6 +866,17 @@ err:
                     CustomActions.SetFieldToNotRequired(tdc, tableName, fieldName)
                     log("INFO", "doCustAction [" + pi.ToString() + _
                                 "]: SetFieldToNotRequired: Success")
+                Case "UpdateReqTypeId"
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: UpdateReqTypeId: change the requirement type id...")
+                    Dim reqType As String = arrAction(2)
+                    Dim reqTypeId As Integer = Integer.Parse(arrAction(3))
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: UpdateReqTypeId: the req type is: " + reqType + ", new id is :" + reqTypeId.ToString())
+
+                    CustomActions.UpdateReqTypeId(sac, gDomain, gProject, reqType, reqTypeId)
+                    log("INFO", "doCustAction [" + pi.ToString() + _
+                                "]: UpdateReqTypeId: Success")
                 Case Else
                     log("ERROR", "doCustAction [" + pi.ToString() + _
                         "]: do not know how to handle action! (fix your actions.csv file)")

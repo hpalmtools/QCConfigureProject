@@ -106,6 +106,13 @@
         att.Post()
     End Sub
 
+    Public Shared Function RunQuery(ByVal sac As SACLIENTLib.SAapi, ByVal domain As String, ByVal project As String, ByVal query As String) As String
+        Dim strXMLResult As String
+        strXMLResult = sac.RunQuery(domain, project, query, 1000, 0)
+
+        RunQuery = strXMLResult
+    End Function
+
     Shared Function GetAllUDFFields(ByVal tdc As TDAPIOLELib.TDConnection, ByVal tableName As String) As ArrayList
         Dim uFields As ArrayList = New ArrayList()
         Dim custom As TDAPIOLELib.Customization = tdc.Customization
